@@ -1,0 +1,60 @@
+GPUID: 1
+WORKERS: 1
+PRINT_FREQ: 100
+SAVE_FREQ: 10
+PIN_MEMORY: False
+OUTPUT_DIR: 'output'
+
+CUDNN:
+  BENCHMARK: True
+  DETERMINISTIC: False
+  ENABLED: True
+
+DATASET:
+  DATASET: icdar2015
+  ROOT: "/home/wt_yechuanfu/work_code/pytorchOCR/icdar2015" # 数据集图片所在目录
+  CHAR_FILE: '/home/wt_yechuanfu/work_code/crnn.pytorch/common_python_operation/label.txt' # 字符集文件
+  JSON_FILE: {'train': '/home/wt_yechuanfu/work_code/pytorchOCR/icdar2015/conv_train_rec_gt_train.txt', 'val': '/home/wt_yechuanfu/work_code/pytorchOCR/icdar2015/conv_test_rec_gt_test.txt'} # 训练集 验证集标签文件
+  SCALE_FACTOR: 0.25
+  ROT_FACTOR: 30
+  STD: 0.193
+  MEAN: 0.588
+  ALPHABETS: ''
+
+TRAIN:
+  BATCH_SIZE_PER_GPU: 8
+  SHUFFLE: True
+  BEGIN_EPOCH: 0
+  END_EPOCH: 10000
+  RESUME:
+    IS_RESUME: true
+    FILE: 'output/icdar2015/crnn/checkpoints/checkpoint_best.pth'
+  OPTIMIZER: 'adam'
+  LR: 0.0001
+  WD: 0.0
+  LR_STEP: [100, 200]
+  LR_FACTOR: 0.1
+  MOMENTUM: 0.9
+  NESTEROV: False
+  RMSPROP_ALPHA:
+  RMSPROP_CENTERED:
+  FINETUNE:
+    IS_FINETUNE: False
+    FINETUNE_CHECKPOINIT: 'output/checkpoints/mixed_second_finetune_acc_97P7.pth'
+    FREEZE: true
+
+TEST:
+  BATCH_SIZE_PER_GPU: 4
+  SHUFFLE: True  # for random test rather than test on the whole validation set
+  NUM_TEST_BATCH: 1000
+  NUM_TEST_DISP: 10
+
+MODEL:
+  NAME: 'crnn'
+  IMAGE_SIZE:
+    OW: 280. # origial width: 280
+    H: 32
+    W: 160   # resized width: 160
+  NUM_CLASSES: 0
+  NUM_HIDDEN: 256
+

@@ -1,0 +1,1 @@
+alphabet = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890[]?%()\@.#`´-+=,;:'éÉ/$!&ψ"
