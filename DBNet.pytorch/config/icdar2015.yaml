@@ -1,0 +1,118 @@
+name: DBNet
+arch:
+  type: Model
+  backbone:
+    type: resnet18
+    pretrained: true
+  neck:
+    type: FPN
+    inner_channels: 256
+  head:
+    type: DBHead
+    out_channels: 2
+    k: 50
+post_processing:
+  type: SegDetectorRepresenter
+  args:
+    thresh: 0.3
+    box_thresh: 0.7
+    max_candidates: 1000
+    unclip_ratio: 1.5 # from paper
+metric:
+  type: QuadMetric
+  args:
+    is_output_polygon: false
+loss:
+  type: DBLoss
+  alpha: 1
+  beta: 10
+  ohem_ratio: 3
+optimizer:
+  type: Adam
+  args:
+    lr: 0.001
+    weight_decay: 0
+    amsgrad: true
+lr_scheduler:
+  type: WarmupPolyLR
+  args:
+    warmup_epoch: 3
+trainer:
+  seed: 2
+  epochs: 1200
+  log_iter: 10
+  show_images_iter: 50
+  resume_checkpoint: ''
+  finetune_checkpoint: ''
+  output_dir: output
+  tensorboard: true
+dataset:
+  train:
+    dataset:
+      type: ICDAR2015Dataset # 数据集类型
+      args:
+        data_path: # 一个存放 img_path \t gt_path的文件
+          - '/home/wt_yechuanfu/work_code/pytorchOCR/icdar2015/train_list.txt'
+        pre_processes: # 数据的预处理过程，包含augment和标签制作
+          - type: IaaAugment # 使用imgaug进行变换
+            args:
+              - {'type':Fliplr, 'args':{'p':0.5}}
+              - {'type': Affine, 'args':{'rotate':[-10,10]}}
+              - {'type':Resize,'args':{'size':[0.5,3]}}
+          - type: EastRandomCropData
+            args:
+              size: [640,640]
+              max_tries: 50
+              keep_ratio: true
+          - type: MakeBorderMap
+            args:
+              shrink_ratio: 0.4
+              thresh_min: 0.3
+              thresh_max: 0.7
+          - type: MakeShrinkMap
+            args:
+              shrink_ratio: 0.4
+              min_text_size: 8
+        transforms: # 对图片进行的变换方式
+          - type: ToTensor
+            args: {}
+          - type: Normalize
+            args:
+              mean: [0.485, 0.456, 0.406]
+              std: [0.229, 0.224, 0.225]
+        img_mode: RGB
+        filter_keys: [img_path,img_name,text_polys,texts,ignore_tags,shape] # 返回数据之前，从数据字典里删除的key
+        ignore_tags: ['*', '###']
+    loader:
+      batch_size: 2
+      shuffle: true
+      pin_memory: false
+      num_workers: 4
+      collate_fn: ''
+  validate:
+    dataset:
+      type: ICDAR2015Dataset
+      args:
+        data_path:
+          - '/home/wt_yechuanfu/work_code/pytorchOCR/icdar2015/test_list.txt'
+        pre_processes:
+          - type: ResizeShortSize
+            args:
+              short_size: 736
+              resize_text_polys: false
+        transforms:
+          - type: ToTensor
+            args: {}
+          - type: Normalize
+            args:
+              mean: [0.485, 0.456, 0.406]
+              std: [0.229, 0.224, 0.225]
+        img_mode: RGB
+        filter_keys: []
+        ignore_tags: ['*', '###']
+    loader:
+      batch_size: 1
+      shuffle: true
+      pin_memory: false
+      num_workers: 4
+      collate_fn: ICDARCollectFN
